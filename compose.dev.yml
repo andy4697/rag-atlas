@@ -1,0 +1,36 @@
+version: '3.8'
+
+# Development override for docker-compose.yml
+services:
+  app:
+    build:
+      context: .
+      target: builder
+    volumes:
+      - .:/app
+      - /app/.venv
+    environment:
+      - ENV=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: ["python", "-m", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # Only essential services for development
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  opensearch:
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms256m -Xmx256m"  # Reduced memory for dev
+
+  # Remove heavy services for faster dev startup
+  airflow-webserver:
+    profiles: ["airflow"]
+  
+  airflow-scheduler:
+    profiles: ["airflow"]
